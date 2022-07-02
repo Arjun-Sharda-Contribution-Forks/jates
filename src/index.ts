@@ -1,5 +1,15 @@
 export default class Jate extends Date {
 
+    static defaultFormat: string = ''
+    static namedFormat: any = {}
+
+    static setFormat(name: string, format: string) {
+        Jate.namedFormat[name] = format
+    }
+    static removeFormat(name: string) {
+        delete Jate.namedFormat?.[name]
+    }
+
     months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -20,7 +30,12 @@ export default class Jate extends Date {
         return Math.floor(diff / oneDay);
     }
 
-    format(formatter: string) {
+    nformat(name: string) {
+        console.log(name)
+        console.log(Jate.namedFormat?.[name] || '')
+        return this.format(Jate.namedFormat?.[name] || '')
+    }
+    format(formatter: string = Jate.defaultFormat) {
         let tokens = []
         let nextToken = ''
         for (let i = 0; i < formatter.length; i++) {
@@ -65,6 +80,19 @@ export default class Jate extends Date {
                 continue
             }
             switch (token) {
+                // Year formatting
+                case 'yyyy': formattedDate += this.#formatNumber(this.getFullYear(), 4); break
+                case 'yyy': formattedDate += this.#formatNumber(this.getFullYear(), 3); break
+                case 'yy': formattedDate += this.#formatNumber(this.getFullYear(), 2); break
+                case 'yo': formattedDate += this.#getOrdinalNumber(this.getFullYear()); break
+                case 'y': formattedDate += this.getFullYear(); break
+                // Quarter formatting
+                case 'qqqqq': case 'QQQQQ': formattedDate += this.getQuarter(); break
+                case 'qqqq': case 'QQQQ': formattedDate += this.#getOrdinalNumber(this.getQuarter()) + 'quarter'; break
+                case 'qqq': case 'QQQ': formattedDate += 'Q' + this.getQuarter(); break
+                case 'qq': case 'QQ': formattedDate += this.#formatNumber(this.getQuarter(), 5); break
+                case 'qo': case 'Qo': formattedDate += this.#getOrdinalNumber(this.getQuarter()); break
+                case 'q': case 'Q': formattedDate += this.getQuarter(); break
                 // Month formatting
                 case 'LLLLL': case 'MMMMM': formattedDate += this.months[this.getMonth()][0]; break
                 case 'LLLL': case 'MMMM': formattedDate += this.months[this.getMonth()]; break
@@ -84,18 +112,30 @@ export default class Jate extends Date {
                 case 'EEEEE': formattedDate += this.days[this.getDay() - 1].substring(0, 1); break
                 case 'EEEE': formattedDate += this.days[this.getDay() - 1]; break
                 case 'EEE': case 'EE': case 'E': formattedDate += this.days[this.getDay() - 1].substring(0, 3); break
-                // Quarter formatting
-                case 'qqqqq': case 'QQQQQ': formattedDate += this.getQuarter(); break
-                case 'qqqq': case 'QQQQ': formattedDate += this.#getOrdinalNumber(this.getQuarter()) + 'quarter'; break
-                case 'qqq': case 'QQQ': formattedDate += 'Q' + this.getQuarter(); break
-                case 'qq': case 'QQ': formattedDate += this.#formatNumber(this.getQuarter(), 5); break
-                case 'qo': case 'Qo': formattedDate += this.#getOrdinalNumber(this.getQuarter()); break
-                case 'q': case 'Q': formattedDate += this.getQuarter(); break
                 // AM - PM
                 case 'aaaaa': formattedDate += this.#getMeridiem().charAt(0); break
                 case 'aaaa': formattedDate += this.#getMeridiem().split('').join(','); break
                 case 'aaa': formattedDate += this.#getMeridiem(); break
                 case 'aa': case 'a': formattedDate += this.#getMeridiem().toUpperCase(); break
+                // Hour formatting
+                case 'hh': formattedDate += this.#formatNumber(this.#getHour(this.getHours(), 1, 12)); break
+                case 'ho': formattedDate += this.#getOrdinalNumber(this.#getHour(this.getHours(), 1, 12)); break
+                case 'h': formattedDate += this.#getHour(this.getHours(), 1, 12); break
+                case 'HH': formattedDate += this.#formatNumber(this.#getHour(this.getHours(), 0, 23)); break
+                case 'Ho': formattedDate += this.#getOrdinalNumber(this.#getHour(this.getHours(), 0, 23)); break
+                case 'H': formattedDate += this.#getHour(this.getHours(), 0, 23); break
+                case 'kk': formattedDate += this.#formatNumber(this.#getHour(this.getHours(), 1, 24)); break
+                case 'ko': formattedDate += this.#getOrdinalNumber(this.#getHour(this.getHours(), 1, 24)); break
+                case 'k': formattedDate += this.#getHour(this.getHours(), 1, 24); break
+                // Minute formatting
+                case 'mm': formattedDate += this.#formatNumber(this.getMinutes()); break
+                case 'mo': formattedDate += this.#getOrdinalNumber(this.getMinutes()); break
+                case 'm': formattedDate += this.getMinutes(); break
+                // Second formatting
+                case 'ss': formattedDate += this.#formatNumber(this.getSeconds()); break
+                case 'so': formattedDate += this.#getOrdinalNumber(this.getSeconds()); break
+                case 's': formattedDate += this.getSeconds(); break
+
             }
         }
 
@@ -137,6 +177,16 @@ export default class Jate extends Date {
             return 'am'
         }
         else { return 'pm' }
+    }
+
+    #getHour(hour: number, min: number, max: number) {
+        if (hour > max) {
+            return min + (hour - max - 1)
+        }
+        if (hour < min) {
+            return min
+        }
+        return hour
     }
 
 }
